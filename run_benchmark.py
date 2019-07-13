@@ -143,21 +143,27 @@ cd {pwd}\n\n""".format(the_pdb=the_pdb, dirnum=i, pwd=os.getcwd()))
     # Phase 3 -- run erraser2 on a culled portion of the phenix pdb.
     #  
     try:
-        exe= '/home/groups/rhiju/amw579/Rosetta/main/source/bin/erraser2.default.linuxgccrelease' #'$Gsource/bin/erraser2'
-        score_flags= ' -score:weights stepwise/rna/rna_res_level_energy4.wts -restore_talaris_behavior'
-        weight_adj= ' -set_weights elec_dens_fast 10.0 cart_bonded 5.0 linear_chainbreak 10.0 chainbreak 10.0 fa_rep 1.5 fa_intra_rep 0.5 rna_torsion 10 suiteness_bonus 5 rna_sugar_close 10 atom_pair_constraint 10 '
-        mutes= '-mute  core.scoring.electron_density.xray_scattering core.pack.rotamer_set.RotamerSet_ core.scoring.CartesianBondedEnergy -render_density true'
-        mapfile= '{}_2mFo-DFc_map.ccp4'.format(the_pdb.replace('.pdb', ''))
-        fasta= the_pdb.replace('pdb', 'fasta')
+        exe: str = '/home/groups/rhiju/amw579/Rosetta/main/source/bin/erraser2.default.linuxgccrelease' #'$Gsource/bin/erraser2'
+        score_flags: str = ' -score:weights stepwise/rna/rna_res_level_energy4.wts -restore_talaris_behavior'
+        weight_adj: str = ' -set_weights elec_dens_fast 10.0 cart_bonded 5.0 linear_chainbreak 10.0 chainbreak 10.0 fa_rep 1.5 fa_intra_rep 0.5 rna_torsion 10 suiteness_bonus 5 rna_sugar_close 10 atom_pair_constraint 10 '
+        mutes: str = '-mute  core.scoring.electron_density.xray_scattering core.pack.rotamer_set.RotamerSet_ core.scoring.CartesianBondedEnergy -render_density true'
+        mapfile: str = '{}_2mFo-DFc_map.ccp4'.format(the_pdb.replace('.pdb', ''))
+        fasta: str = the_pdb.replace('pdb', 'fasta')
         #-sampler_num_pose_kept 10 for quick?
-        execution_fn('if [[ ! -e ./output/erraser_rd1.pdb ]]; then \n\tif [[ ! -e ./output/phenix_rd1_culled.pdbFINISHED_1.pdb ]] ; then\n\t\t{} -s ./output/phenix_rd1_culled.pdb {} {} {} -rmsd_screen 3.0 -edensity:mapfile {} -fasta ./output/{} -allow_virtual_side_chains false -sampler_num_pose_kept 10 -missing_density_to_jump true\n\tfi\n\n\tmv ./output/phenix_rd1_culled.pdbFINISHED_1.pdb ./output/erraser_rd1.pdb\nfi\n'.format(
+        execution_fn('if [[ ! -e ./output/erraser_rd1.pdb ]]; then \n\tif [[ ! -e ./output/phenix_rd1_culled.pdbFINISHED_1.pdb ]] ; then\n\t\t{} -s ./output/phenix_rd1_culled.pdb {} {} {} -rmsd_screen 3.0 -edensity:mapfile {} -fasta ./output/{} -allow_virtual_side_chains false -sampler_num_pose_kept 10 -missing_density_to_jump true\n\tfi\n\n\tmv ./output/phenix_rd1_culled.pdbFINISHED_1.pdb ./output/erraser_rd1_unmerged.pdb\nfi\n'.format(
             exe, score_flags, weight_adj, mutes, mapfile, fasta
         ))
     except:
         quit()
+    ###
+    # Phase 3.5 -- merge culled ions back.
+    #  
+    execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep '^ATOM\|^HETATM' > ./output/erraser_rd1.pdb")
+    execution_fn("cat ./output/phenix_rd1.pdb | grep \"HOH\|MG\|SO4\|K     K\|SR\" >> ./output/erraser_rd1.pdb")
+    execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep -v '^ATOM\|^HETATM' >> ./output/erraser_rd1.pdb")
 
     try:
-        # We also do the initial phenix refinement once.
+        # We also do the final phenix refinement once.
         execution_fn('if [[ ! -e ./output/phenix_rd2.pdb ]] ; then \n\tcp {} ./output/\n\tcp *.cif ./output/\n\tpushd ./output/\n\tphenix.refine {} {} {} --overwrite\n\tmv erraser_rd1_refine_001.pdb phenix_rd2.pdb\n\tpopd\nfi'.format(the_mtz, 'erraser_rd1.pdb', the_mtz, " ".join(the_cifs)))
     except:
         quit()
