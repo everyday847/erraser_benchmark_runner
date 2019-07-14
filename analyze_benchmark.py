@@ -10,7 +10,7 @@ import os
 import glob
 import functools # for partial
 import shutil # for rmtree
-from typing import Callable
+from typing import Callable, List
 
 from molprobity import Result, Clash
 
