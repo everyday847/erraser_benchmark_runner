@@ -69,7 +69,7 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     # Phase 1.75: initial molprobity analysis.
     if not os.path.exists("{}_start.molprobity".format(the_pdb.replace(".pdb", ""))):
         os.system('phenix.molprobity ./output/phenix_updated.pdb {} {}'.format(the_mtz, " ".join(the_cifs)))
-        os.system('mv molprobity.out {}_start.molprobity')
+        os.system('mv molprobity.out {}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
 
     ###
     # Phase 2 -- refine using phenix against the mtz.
@@ -164,10 +164,13 @@ cd {pwd}\n\n""".format(the_pdb=the_pdb, dirnum=i, pwd=os.getcwd()))
         ))
     except:
         quit()
+    
     ###
     # Phase 3.5 -- merge culled ions back.
     #  
-    execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep '^ATOM\|^HETATM' > ./output/erraser_rd1.pdb")
+    
+    # Note that we first have to strip Hs
+    execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep '^ATOM\|^HETATM' |grep -v 'H  $' > ./output/erraser_rd1.pdb")
     execution_fn("cat ./output/phenix_rd1.pdb | grep \"HOH\|MG\|SO4\|K     K\|SR\" >> ./output/erraser_rd1.pdb")
     execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep -v '^ATOM\|^HETATM' >> ./output/erraser_rd1.pdb")
 
@@ -185,6 +188,8 @@ cd {pwd}\n\n""".format(the_pdb=the_pdb, dirnum=i, pwd=os.getcwd()))
     # Phase 5 -- phenix.molprobity and analysis
     try:
         execution_fn('cd ./output/ && phenix.molprobity phenix_rd2.pdb {} {} && mv molprobity.out {}_end.molprobity'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
+    except:
+        quit()
     
     os.chdir('..')
 
