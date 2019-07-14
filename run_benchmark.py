@@ -12,8 +12,6 @@ import functools # for partial
 import shutil # for rmtree
 from typing import Callable
 
-from molprobity import Result
-
 def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     """
     cd into a directory, ensure it's suited for erraser2 to be run there, and
