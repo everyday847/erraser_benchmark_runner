@@ -10,7 +10,7 @@ import os
 import glob
 import functools # for partial
 import shutil # for rmtree
-from typing import Callable
+from typing import Callable, List
 
 def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     """
