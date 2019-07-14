@@ -12,6 +12,8 @@ import functools # for partial
 import shutil # for rmtree
 from typing import Callable
 
+from molprobity import Result
+
 def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     """
     cd into a directory, ensure it's suited for erraser2 to be run there, and
@@ -61,6 +63,13 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
         #os.system('cp {}/h2u_two_plane.cif ./output/'.format(os.path.dirname(os.path.realpath(__file__))))
         os.system('cp {}/h2u_two_plane.cif ./'.format(os.path.dirname(os.path.realpath(__file__))))
         the_cifs.append('h2u_two_plane.cif')
+
+
+    ###
+    # Phase 1.75: initial molprobity analysis.
+    if not os.path.exists("{}_start.molprobity".format(the_pdb.replace(".pdb", ""))):
+        os.system('phenix.molprobity ./output/phenix_updated.pdb {} {}'.format(the_mtz, " ".join(the_cifs)))
+        os.system('mv molprobity.out {}_start.molprobity')
 
     ###
     # Phase 2 -- refine using phenix against the mtz.
@@ -162,12 +171,20 @@ cd {pwd}\n\n""".format(the_pdb=the_pdb, dirnum=i, pwd=os.getcwd()))
     execution_fn("cat ./output/phenix_rd1.pdb | grep \"HOH\|MG\|SO4\|K     K\|SR\" >> ./output/erraser_rd1.pdb")
     execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep -v '^ATOM\|^HETATM' >> ./output/erraser_rd1.pdb")
 
+
+    ###
+    # Phase 4 -- final phenix refinement
     try:
         # We also do the final phenix refinement once.
         execution_fn('if [[ ! -e ./output/phenix_rd2.pdb ]] ; then \n\tcp {} ./output/\n\tcp *.cif ./output/\n\tpushd ./output/\n\tphenix.refine {} {} {} --overwrite\n\tmv erraser_rd1_refine_001.pdb phenix_rd2.pdb\n\tpopd\nfi'.format(the_mtz, 'erraser_rd1.pdb', the_mtz, " ".join(the_cifs)))
     except:
         quit()
-            
+
+          
+    ###
+    # Phase 5 -- phenix.molprobity and analysis
+    try:
+        execution_fn('cd ./output/ && phenix.molprobity phenix_rd2.pdb {} {} && mv molprobity.out {}_end.molprobity'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
     
     os.chdir('..')
 
