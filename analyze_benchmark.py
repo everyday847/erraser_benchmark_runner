@@ -45,4 +45,4 @@ if __name__ == '__main__':
     parser.add_argument('directory', type=str, nargs='+',
                         help='dir(s) to run')
     args = parser.parse_args()
-    main(args.directory, args.run_test, args.nstruct)
+    main(args.directory)

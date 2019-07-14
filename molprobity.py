@@ -46,6 +46,7 @@ def clashes_from_file_contents(file_contents: List[str]) -> List[Clash]:
 def clashscore_from_file_contents(file_contents: List[str]) -> float:
     for line in file_contents:
         if "clashscore" in line: return float(line.split()[2])
+        if "Clashscore" in line: return float(line.split()[2])
     return 0
 
 def suites_from_file_contents(file_contents: List[str]) -> List[Suite]: pass
