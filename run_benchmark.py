@@ -203,7 +203,7 @@ def write_to_all_sbatch(text, nstruct):
             f.write("{}\n".format(text.replace('output', 'output/runs/{}/'.format(i))))
     
 
-def main(directories: str, run_test: bool, nstruct: int) -> None:
+def main(directories: List[str], run_test: bool, nstruct: int) -> None:
     for d in directories:
         info("Running ERRASER2 on contents of directory {}.".format(d))
         if run_test:
