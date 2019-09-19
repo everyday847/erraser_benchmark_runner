@@ -39,8 +39,6 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     # Phase 1 -- we have at least a pdb and mtz. make maps.
     if len(glob.glob('./*ccp4')) == 0:
         info("Map not yet generated, making it.")
-        #the_pdb, the_mtz = glob.glob('*.pdb')[0], glob.glob('*.mtz')[0]
-        # We don't use execution fn here b/c you do this ONCE.
         os.system('phenix.maps {} {} > phenix_maps.log'.format(the_pdb, the_mtz))
         if len(glob.glob('./*ccp4')) == 0:
             error("Map creation with Phenix requires manual intervention \
@@ -57,8 +55,6 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     # Phase 1.5 -- 'phenix.ready_set'
     if not os.path.exists('./output/phenix_updated.pdb'):
         info("Ready-set PDB not yet created; making it.")
-        #print('phenix.ready_set {}'.format(the_pdb))
-        # Ditto: do once.
         os.system('phenix.ready_set {}'.format(the_pdb))
         try:
             shutil.move('{}.updated.pdb'.format(the_pdb.replace('.pdb', '')), './output/phenix_updated.pdb')
@@ -71,7 +67,6 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
         the_cifs = [c for c in the_cifs if c != 'H2U.cif']
         warning('replacing automatically generated H2U parameters')
         # provide from somewhere.
-        #os.system('cp {}/h2u_two_plane.cif ./output/'.format(os.path.dirname(os.path.realpath(__file__))))
         os.system('cp {}/h2u_two_plane.cif ./'.format(os.path.dirname(os.path.realpath(__file__))))
         the_cifs.append('h2u_two_plane.cif')
 
@@ -82,32 +77,13 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     if not os.path.exists("{}_start.molprobity".format(the_pdb.replace(".pdb", ""))):
         info("Starting molprobity not preexisting; generating it.")
         try:
-            #os.system('phenix.molprobity ./output/phenix_updated.pdb {} {} >molprobity.log'.format(the_mtz, " ".join(the_cifs)))
             os.system('phenix.molprobity ./output/phenix_updated.pdb {} {} '.format(the_mtz, " ".join(the_cifs)))
-            #os.system('mv molprobity.out {}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
             shutil.move('molprobity.out', '{}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
         except:
             warning("didn't find the phenix.molprobity output file, assuming bad rfree flags")
-            #os.system('phenix.molprobity input.xray_data.r_free_flags.generate=True ./output/phenix_updated.pdb {} {} >molprobity.log'.format(the_mtz, " ".join(the_cifs)))
             os.system('phenix.molprobity input.xray_data.r_free_flags.generate=True ./output/phenix_updated.pdb {} {} '.format(the_mtz, " ".join(the_cifs)))
             shutil.move('molprobity.out', '{}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
 
-
-    ###
-    # Phase 2 -- refine using phenix against the mtz.
-    #if not os.path.exists('./output/phenix_rd1.pdb'):
-    #    try:
-    #        # We also do the initial phenix refinement once.
-    #        os.system('phenix.refine {} {} {} --overwrite '.format('./output/phenix_updated.pdb', the_mtz, " ".join(the_cifs)))
-    #        #os.rename('phenix_updated_refine_001.pdb'.format(the_pdb.replace('.pdb', '')), './output/phenix_rd1.pdb')
-    #        os.system('cp phenix_updated_refine_001.pdb ./output/phenix_rd1.pdb')
-    #    except FileNotFoundError:
-    #        warning("didn't find the phenix.refine output file, assuming bad rfree flags")
-    #        os.system('phenix.refine {} {} {} refinement.input.xray_data.r_free_flags.generate=True --overwrite'.format('./output/phenix_updated.pdb', the_mtz, " ".join(the_cifs)))
-    #        #os.rename('phenix_updated_refine_001.pdb'.format(the_pdb.replace('.pdb', '')), './output/phenix_rd1.pdb')
-    #        os.system('cp phenix_updated_refine_001.pdb ./output/phenix_rd1.pdb')
-   
-    
     ###
     # Phase 2.05 -- cull ions and stuff from PDB. How should we do this?
     # Useful approach -- just get rid of most common stuff that will make
@@ -133,7 +109,6 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
             pass
     
         # write sbatch headers
-        # not using execution_fn b/c we know it doesn't apply
         for i in range(nstruct):
             try:
                 os.mkdir('output/runs/{}'.format(i))
@@ -158,7 +133,6 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
         fasta: str = the_pdb.replace('pdb', 'fasta')
         #-sampler_num_pose_kept 10 for quick?
         info("About to run ERRASER2")
-        #execution_fn('if [[ ! -e ./output/erraser_rd1.pdb ]]; then \n\tif [[ ! -e ./output/phenix_updated_culled.pdbFINISHED_1.pdb ]] ; then\n\t\t{} -s ./output/phenix_updated_culled.pdb {} {} {} -rmsd_screen 3.0 -edensity:mapfile {} -fasta ./output/{} -allow_virtual_side_chains false -sampler_num_pose_kept 100 -missing_density_to_jump true\n\tfi\n\n\tmv ./output/phenix_updated_culled.pdbFINISHED_1.pdb ./output/erraser_rd1_unmerged.pdb\nfi\n'.format(
         execution_fn('if [ ! -e ./output/erraser_rd1.pdb ]; then \n\tif [ ! -e ./output/phenix_updated_culled.pdbFINISHED_1.pdb ] ; then\n\t\t{} -s ./output/phenix_updated_culled.pdb {} {} {} -rmsd_screen 3.0 -edensity:mapfile {} -fasta ./output/{} -allow_virtual_side_chains false -sampler_num_pose_kept 100 -missing_density_to_jump true\n\tfi\n\n\tmv ./output/phenix_updated_culled.pdbFINISHED_1.pdb ./output/erraser_rd1_unmerged.pdb\nfi\n'.format(
             exe, score_flags, weight_adj, mutes, mapfile, fasta
         ))
@@ -175,23 +149,11 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     execution_fn("cat ./output/phenix_updated.pdb | grep \"HOH\|MG\|SO4\|K     K\|SR\" >> ./output/erraser_rd1.pdb")
     execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep -v '^ATOM\|^HETATM' >> ./output/erraser_rd1.pdb")
 
-
-    ###
-    # Phase 4 -- final phenix refinement
-    #try:
-    #    # We also do the final phenix refinement once.
-    #    execution_fn('if [[ ! -e ./output/phenix_rd2.pdb ]] ; then \n\tcp {} ./output/\n\tcp *.cif ./output/\n\tpushd ./output/\n\tphenix.refine {} {} {} --overwrite\n\tmv erraser_rd1_refine_001.pdb phenix_rd2.pdb\n\tpopd\nfi'.format(the_mtz, 'erraser_rd1.pdb', the_mtz, " ".join(the_cifs)))
-    #except:
-    #    quit()
-
-          
     ###
     # Phase 5 -- phenix.molprobity and analysis
     try:
-        #execution_fn('cd ./output/ && phenix.molprobity phenix_rd2.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
         execution_fn('cd ./output/ && phenix.molprobity erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
     except:
-        #execution_fn('cd ./output/ && phenix.molprobity phenix_rd2.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
         execution_fn('cd ./output/ && phenix.molprobity input.xray_data.r_free_flags.generate erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
         #quit()
     
