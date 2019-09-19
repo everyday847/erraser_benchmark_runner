@@ -74,6 +74,7 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
 
     ###
     # Phase 1.75: initial molprobity analysis.
+    generation_needed = False
     info("About to run phase one point seven five: molprobity.")
     if not os.path.exists("{}_start.molprobity".format(the_pdb.replace(".pdb", ""))):
         info("Starting molprobity not preexisting; generating it.")
@@ -81,6 +82,9 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
             os.system('phenix.molprobity ./output/phenix_updated.pdb {} {} '.format(the_mtz, " ".join(the_cifs)))
             shutil.move('molprobity.out', '{}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
         except:
+            # Will become useful later when execution may possibly be deferred later.
+            generation_needed = True
+
             warning("didn't find the phenix.molprobity output file, assuming bad rfree flags")
             os.system('phenix.molprobity input.xray_data.r_free_flags.generate=True ./output/phenix_updated.pdb {} {} '.format(the_mtz, " ".join(the_cifs)))
             shutil.move('molprobity.out', '{}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
@@ -152,11 +156,10 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
 
     ###
     # Phase 5 -- phenix.molprobity and analysis
-    try:
-        execution_fn('cd ./output/ && phenix.molprobity erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
-    except:
+    if generation_needed:
         execution_fn('cd ./output/ && phenix.molprobity input.xray_data.r_free_flags.generate erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
-        #quit()
+    else:
+        execution_fn('cd ./output/ && phenix.molprobity erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
     
     os.chdir('..')
 
