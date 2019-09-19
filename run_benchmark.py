@@ -16,7 +16,8 @@ from helpers import sbatch_header
 def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     """
     cd into a directory, ensure it's suited for erraser2 to be run there, and
-    do so
+    do so. if --run_test, run erraser2 immediately; otherwise, make sbatch scripts
+    (which can just be run through bash as appropriate). makes as many as --nstruct.
     """
 
     #'/home/groups/rhiju/amw579/Rosetta/main/source/bin/erraser2.default.linuxgccrelease' #'$Gsource/bin/erraser2'
@@ -159,7 +160,14 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     
     os.chdir('..')
 
+
 def write_to_all_sbatch(text, nstruct):
+    """
+    Look at this as a 'delayed os.system' -- you pass commands here and they
+    end up in nstruct sbatch files, working in appropriate separate dirs,
+    that you can execute later.
+    """
+
     try:
         os.mkdir('sbatch_files')
     except:
@@ -184,6 +192,9 @@ def main(directories: List[str], run_test: bool, nstruct: int) -> None:
             erraser2(d, execution_fn=functools.partial(write_to_all_sbatch, nstruct=nstruct), nstruct=nstruct)
 
 def test_args():
+    """
+    In theory, here we can write unit tests for how args should be handled
+    """
     pass
 
 if __name__ == '__main__':
