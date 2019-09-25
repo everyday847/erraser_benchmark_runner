@@ -20,9 +20,9 @@ def analyze(d: str):
     Make all before/after comparisons.
     """
 
-    starting_molprobity = Result("{}/{}_start.molprobity".format(d, d))
+    starting_molprobity = Result(open("{}/{}_start.molprobity".format(d, d.replace('/','').replace('.',''))).readlines())
     # will have to supply nstruct or figure out the range here
-    end_molprobity = { ii: Result("{}/output/runs/{}/{}_end.molprobity".format(d, ii, d)) for ii in range(100) }
+    end_molprobity = { ii: Result(open("{}/output/runs/{}/{}_end.molprobity".format(d, ii, d.replace('/','').replace('.',''))).readlines()) for ii in range(100) }
 
     for ii, end_mol in end_molprobity.items():
         for c1, c2 in zip(starting_molprobity.clashes, end_mol.clashes):

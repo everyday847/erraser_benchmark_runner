@@ -81,6 +81,7 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
         try:
             os.system('phenix.molprobity ./output/phenix_updated.pdb {} {} '.format(the_mtz, " ".join(the_cifs)))
             shutil.move('molprobity.out', '{}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
+            os.system('phenix.clashscore ./output/phenix_updated.pdb >> {}_start.molprobity'.format(the_pdb.replace(".pdb", "")))
         except:
             # Will become useful later when execution may possibly be deferred later.
             generation_needed = True
@@ -148,18 +149,19 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     ###
     # Phase 3.5 -- merge culled ions back.
     #  
-    
+   
     # Note that we first have to strip Hs
     execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep '^ATOM\|^HETATM' |grep -v 'H  $' > ./output/erraser_rd1.pdb")
     execution_fn("cat ./output/phenix_updated.pdb | grep \"HOH\|MG\|SO4\|K     K\|SR\" >> ./output/erraser_rd1.pdb")
     execution_fn("cat ./output/erraser_rd1_unmerged.pdb | grep -v '^ATOM\|^HETATM' >> ./output/erraser_rd1.pdb")
+    #execution_fn("if [[ -e ./output/erraser_rd1_unmerged.pdb ]] ; then\n\tcat ./output/erraser_rd1_unmerged.pdb | grep '^ATOM\|^HETATM' |grep -v 'H  $' > ./output/erraser_rd1.pdb\n\tcat ./output/phenix_rd1.pdb | grep \"HOH\|MG\|SO4\|K     K\|SR\" >> ./output/erraser_rd1.pdb\n\tcat ./output/erraser_rd1_unmerged.pdb | grep -v '^ATOM\|^HETATM' >> ./output/erraser_rd1.pdb\nfi\n")
 
     ###
     # Phase 5 -- phenix.molprobity and analysis
     if generation_needed:
         execution_fn('cd ./output/ && phenix.molprobity input.xray_data.r_free_flags.generate erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
     else:
-        execution_fn('cd ./output/ && phenix.molprobity erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", "")))
+        execution_fn('cd ./output/ && phenix.molprobity erraser_rd1.pdb {} {} && mv molprobity.out {}_end.molprobity && phenix.clashscore erraser_rd1.pdb >> {}_end.molprobity && cd ..'.format(the_mtz, " ".join(the_cifs), the_pdb.replace(".pdb", ""), the_pdb.replace(".pdb", "")))
     
     os.chdir('..')
 
