@@ -21,7 +21,7 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     """
 
     #'/home/groups/rhiju/amw579/Rosetta/main/source/bin/erraser2.default.linuxgccrelease' #'$Gsource/bin/erraser2'
-    exe: str = '{}/main/source/bin/erraser2'.format(os.environ['ROSETTA'])
+    exe: str = '{}/main/source/bin/erraser2.linuxgccrelease'.format(os.environ['ROSETTA'])
 
 
     try:
@@ -32,7 +32,11 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
 
     #info('in directory {}'.format(d))
 
-    the_pdb: str = glob.glob('*.pdb')[0]
+    # eliminate any pdbs in common with cifs
+    cif_headers = [c.replace('.cif', '') for c in glob.glob('*.cif')]
+    pdb_headers = [p.replace('.pdb', '') for p in glob.glob('*.pdb') if p not in cif_headers]
+
+    the_pdb: str = "{}.pdb".format(pdb_headers[0])
     the_mtz: str = the_pdb.replace('pdb', 'mtz')
 
     info("About to run phase one: mapmaking.")
