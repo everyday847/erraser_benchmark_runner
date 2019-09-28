@@ -34,7 +34,7 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
 
     # eliminate any pdbs in common with cifs
     cif_headers = [c.replace('.cif', '') for c in glob.glob('*.cif')]
-    pdb_headers = [p.replace('.pdb', '') for p in glob.glob('*.pdb') if p not in cif_headers]
+    pdb_headers = [p.replace('.pdb', '') for p in glob.glob('*.pdb') if p not in cif_headers and p != "H2U.pdb"]
 
     the_pdb: str = "{}.pdb".format(pdb_headers[0])
     the_mtz: str = the_pdb.replace('pdb', 'mtz')
@@ -136,7 +136,7 @@ def erraser2(d: str, execution_fn: Callable, nstruct: int) -> None:
     # Phase 3 -- run erraser2 on a culled portion of the phenix pdb.
     #  
     try:
-        score_flags: str = ' -score:weights stepwise/rna/rna_res_level_energy4.wts -restore_talaris_behavior'
+        score_flags: str = ' -score:weights stepwise/rna/rna_res_level_energy7beta.wts '
         weight_adj: str = ' -set_weights elec_dens_fast 10.0 cart_bonded 5.0 linear_chainbreak 10.0 chainbreak 10.0 fa_rep 1.5 fa_intra_rep 0.5 rna_torsion 10 suiteness_bonus 5 rna_sugar_close 10 atom_pair_constraint 10 '
         mutes: str = '-mute  core.scoring.electron_density.xray_scattering core.pack.rotamer_set.RotamerSet_ core.scoring.CartesianBondedEnergy -render_density true'
         mapfile: str = '{}_2mFo-DFc_map.ccp4'.format(the_pdb.replace('.pdb', ''))
